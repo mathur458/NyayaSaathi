@@ -1,7 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Animated,
-  Dimensions,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -10,9 +15,15 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+
+/* =========================================================
+   THEME
+========================================================= */
 
 const YELLOW = "#F4C400";
 const BLACK = "#070707";
@@ -23,9 +34,12 @@ const WHITE = "#F7F7F5";
 const MUTED = "#999999";
 const DIM = "#686868";
 const GREEN = "#A8D08D";
-const RED = "#E78B8B";
 
 const STORAGE_KEY = "@nyayasaathi_cases";
+
+/* =========================================================
+   DATA
+========================================================= */
 
 const RIGHTS = [
   {
@@ -43,6 +57,7 @@ const RIGHTS = [
       "Services creating avoidable safety risks",
     ],
   },
+
   {
     id: "information",
     number: "02",
@@ -59,6 +74,7 @@ const RIGHTS = [
       "Important limitations and conditions",
     ],
   },
+
   {
     id: "choice",
     number: "03",
@@ -74,6 +90,7 @@ const RIGHTS = [
       "Pressure-selling practices",
     ],
   },
+
   {
     id: "heard",
     number: "04",
@@ -89,6 +106,7 @@ const RIGHTS = [
       "Difficulty accessing a grievance mechanism",
     ],
   },
+
   {
     id: "redressal",
     number: "05",
@@ -104,6 +122,7 @@ const RIGHTS = [
       "Financial loss caused by a consumer transaction",
     ],
   },
+
   {
     id: "education",
     number: "06",
@@ -130,163 +149,197 @@ const ISSUES = [
     description: "Concerns involving products that may pose safety risks.",
     rights: ["safety", "information", "redressal"],
   },
+
   {
     id: "misleading",
     icon: "bullhorn-outline",
     category: "Advertising",
     title: "Misleading Advertisement",
-    description: "Claims, representations or promotions that may mislead consumers.",
+    description:
+      "Claims, representations or promotions that may mislead consumers.",
     rights: ["information", "redressal"],
   },
+
   {
     id: "hidden-charges",
     icon: "cash-minus",
     category: "Pricing",
     title: "Hidden Charges",
-    description: "Unexpected fees, charges or pricing information appearing late in a transaction.",
+    description:
+      "Unexpected fees, charges or pricing information appearing late in a transaction.",
     rights: ["information", "choice"],
   },
+
   {
     id: "dark-patterns",
     icon: "cursor-default-click-outline",
     category: "Digital Consumer",
     title: "Dark Patterns",
-    description: "Interface or design practices that may manipulate consumer decisions.",
+    description:
+      "Interface or design practices that may manipulate consumer decisions.",
     rights: ["information", "choice"],
   },
+
   {
     id: "counterfeit",
     icon: "alert-octagon-outline",
     category: "Products",
     title: "Counterfeit / Fake Product",
-    description: "Concerns about authenticity, imitation or misrepresentation.",
+    description:
+      "Concerns about authenticity, imitation or misrepresentation.",
     rights: ["information", "safety", "redressal"],
   },
+
   {
     id: "quantity",
     icon: "scale-balance",
     category: "Pricing & Measurement",
     title: "Quantity / Measurement Issue",
-    description: "Concerns involving quantity, weight, measurement or packaged declarations.",
+    description:
+      "Concerns involving quantity, weight, measurement or packaged declarations.",
     rights: ["information", "redressal"],
   },
+
   {
     id: "mrp",
     icon: "tag-outline",
     category: "Pricing",
     title: "MRP / Overcharging",
-    description: "A concern about the displayed price, charging practice or price information.",
+    description:
+      "A concern about the displayed price, charging practice or price information.",
     rights: ["information", "redressal"],
   },
+
   {
     id: "warranty",
     icon: "certificate-outline",
     category: "Products",
     title: "Warranty / Guarantee",
-    description: "Disputes involving warranty, guarantee or after-sales commitments.",
+    description:
+      "Disputes involving warranty, guarantee or after-sales commitments.",
     rights: ["information", "redressal"],
   },
+
   {
     id: "service",
     icon: "room-service-outline",
     category: "Services",
     title: "Deficiency in Service",
-    description: "A service was not delivered as represented or expected.",
+    description:
+      "A service was not delivered as represented or expected.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "banking",
     icon: "bank-outline",
     category: "Financial Services",
     title: "Banking / Financial Service",
-    description: "Consumer grievances involving banking or financial services.",
+    description:
+      "Consumer grievances involving banking or financial services.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "telecom",
     icon: "cellphone-wireless",
     category: "Telecom & Internet",
     title: "Telecom / Internet",
-    description: "Issues involving telecom, connectivity, billing or service delivery.",
+    description:
+      "Issues involving telecom, connectivity, billing or service delivery.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "travel",
     icon: "airplane-outline",
     category: "Travel",
     title: "Travel / Hospitality",
-    description: "Consumer issues involving travel, hotels or hospitality services.",
+    description:
+      "Consumer issues involving travel, hotels or hospitality services.",
     rights: ["information", "choice", "redressal"],
   },
+
   {
     id: "healthcare",
     icon: "hospital-box-outline",
     category: "Healthcare",
     title: "Healthcare Service",
-    description: "Consumer-facing grievances involving healthcare services or transactions.",
+    description:
+      "Consumer-facing grievances involving healthcare services or transactions.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "housing",
     icon: "home-city-outline",
     category: "Housing",
     title: "Housing / Real Estate",
-    description: "Consumer concerns relating to housing products or services.",
+    description:
+      "Consumer concerns relating to housing products or services.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "food",
     icon: "food-outline",
     category: "Food",
     title: "Food / Restaurant",
-    description: "Concerns about food quality, information, pricing or service.",
+    description:
+      "Concerns about food quality, information, pricing or service.",
     rights: ["safety", "information", "redressal"],
   },
+
   {
     id: "automotive",
     icon: "car-wrench",
     category: "Automotive",
     title: "Vehicle / Service Centre",
-    description: "Issues involving vehicles, repairs, servicing or related consumer transactions.",
+    description:
+      "Issues involving vehicles, repairs, servicing or related consumer transactions.",
     rights: ["information", "redressal"],
   },
+
   {
     id: "education",
     icon: "school-outline",
     category: "Education",
     title: "Education Service",
-    description: "Consumer-facing concerns involving educational services and transactions.",
+    description:
+      "Consumer-facing concerns involving educational services and transactions.",
     rights: ["information", "heard", "redressal"],
   },
+
   {
     id: "contracts",
     icon: "file-document-edit-outline",
     category: "Contracts",
     title: "Contract / Terms",
-    description: "Concerns about contractual terms, representations or consumer-facing conditions.",
+    description:
+      "Concerns about contractual terms, representations or consumer-facing conditions.",
     rights: ["information", "choice", "redressal"],
   },
+
   {
     id: "ecommerce",
     icon: "cart-outline",
     category: "Digital Commerce",
     title: "E-Commerce",
-    description: "Online shopping, marketplace, payment, delivery and transaction concerns.",
+    description:
+      "Online shopping, marketplace, payment, delivery and transaction concerns.",
     rights: ["information", "choice", "redressal"],
   },
 ];
 
-const SAMPLE_CASES = [
-  {
-    id: "sample-1",
-    title: "Example Consumer Case",
-    issue: "Misleading Advertisement",
-    status: "Draft",
-    date: "Today",
-  },
-];
+/* =========================================================
+   ICON
+========================================================= */
 
-function Icon({ name, size = 22, color = WHITE }) {
+function Icon({
+  name,
+  size = 22,
+  color = WHITE,
+}) {
   return (
     <MaterialCommunityIcons
       name={name}
@@ -296,37 +349,119 @@ function Icon({ name, size = 22, color = WHITE }) {
   );
 }
 
+/* =========================================================
+   LOGO
+========================================================= */
+
 function Logo({ compact = false }) {
   return (
     <View style={styles.logoRow}>
       <View style={styles.logoMark}>
-        <Icon name="scale-balance" size={compact ? 18 : 21} color={BLACK} />
+        <Icon
+          name="scale-balance"
+          size={compact ? 18 : 21}
+          color={BLACK}
+        />
       </View>
 
       <View>
-        <Text style={styles.logoText}>NYAYASAATHI</Text>
+        <Text style={styles.logoText}>
+          NYAYASAATHI
+        </Text>
+
         {!compact && (
-          <Text style={styles.logoSub}>CONSUMER LEGAL AWARENESS</Text>
+          <Text style={styles.logoSub}>
+            CONSUMER LEGAL AWARENESS
+          </Text>
         )}
       </View>
     </View>
   );
 }
 
-function SectionHeader({ eyebrow, title, description, right }) {
+/* =========================================================
+   RESPONSIVE GRID
+========================================================= */
+
+function ResponsiveGrid({
+  children,
+  columns = 3,
+  gap = 12,
+}) {
+  const { width } = useWindowDimensions();
+
+  let actualColumns = columns;
+
+  if (width < 600) {
+    actualColumns = 1;
+  } else if (width < 900) {
+    actualColumns = Math.min(2, columns);
+  }
+
+  const items = React.Children.toArray(children);
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginHorizontal: -(gap / 2),
+      }}
+    >
+      {items.map((child, index) => (
+        <View
+          key={index}
+          style={{
+            width: `${100 / actualColumns}%`,
+            paddingHorizontal: gap / 2,
+            marginBottom: gap,
+          }}
+        >
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+  right,
+}) {
   return (
     <View style={styles.sectionHeader}>
-      <View style={{ flex: 1 }}>
-        {eyebrow && <Text style={styles.eyebrow}>{eyebrow}</Text>}
-        <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionHeaderText}>
+        {eyebrow && (
+          <Text style={styles.eyebrow}>
+            {eyebrow}
+          </Text>
+        )}
+
+        <Text style={styles.sectionTitle}>
+          {title}
+        </Text>
+
         {description && (
-          <Text style={styles.sectionDescription}>{description}</Text>
+          <Text style={styles.sectionDescription}>
+            {description}
+          </Text>
         )}
       </View>
+
       {right}
     </View>
   );
 }
+
+/* =========================================================
+   BUTTON
+========================================================= */
 
 function Button({
   title,
@@ -341,7 +476,9 @@ function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        secondary ? styles.buttonSecondary : styles.buttonPrimary,
+        secondary
+          ? styles.buttonSecondary
+          : styles.buttonPrimary,
         small && styles.buttonSmall,
         full && styles.buttonFull,
         pressed && styles.pressed,
@@ -354,6 +491,7 @@ function Button({
           color={secondary ? WHITE : BLACK}
         />
       )}
+
       <Text
         style={[
           styles.buttonText,
@@ -367,23 +505,44 @@ function Button({
   );
 }
 
-function Card({ children, style }) {
-  return <View style={[styles.card, style]}>{children}</View>;
-}
+/* =========================================================
+   CARD
+========================================================= */
 
-function Tag({ children }) {
+function Card({ children, style }) {
   return (
-    <View style={styles.tag}>
-      <Text style={styles.tagText}>{children}</Text>
+    <View style={[styles.card, style]}>
+      {children}
     </View>
   );
 }
 
-function BottomNav({ screen, nav }) {
+/* =========================================================
+   TAG
+========================================================= */
+
+function Tag({ children }) {
+  return (
+    <View style={styles.tag}>
+      <Text style={styles.tagText}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+/* =========================================================
+   BOTTOM NAV
+========================================================= */
+
+function BottomNav({
+  screen,
+  nav,
+}) {
   const items = [
     ["home", "Home", "home-outline"],
     ["rights", "Rights", "scale-balance"],
-    ["cases", "My Cases", "briefcase-outline"],
+    ["cases", "Cases", "briefcase-outline"],
     ["ask", "Ask AI", "message-text-outline"],
     ["profile", "Profile", "account-outline"],
   ];
@@ -393,11 +552,7 @@ function BottomNav({ screen, nav }) {
       <View style={styles.bottomNav}>
         {items.map(([id, label, icon]) => {
           const active =
-            (screen === "home" && id === "home") ||
-            (screen === "rights" && id === "rights") ||
-            (screen === "cases" && id === "cases") ||
-            (screen === "ask" && id === "ask") ||
-            (screen === "profile" && id === "profile");
+            screen === id;
 
           return (
             <Pressable
@@ -411,13 +566,19 @@ function BottomNav({ screen, nav }) {
             >
               <Icon
                 name={icon}
-                size={21}
-                color={active ? YELLOW : MUTED}
+                size={20}
+                color={
+                  active
+                    ? YELLOW
+                    : MUTED
+                }
               />
+
               <Text
                 style={[
                   styles.navLabel,
-                  active && styles.navLabelActive,
+                  active &&
+                    styles.navLabelActive,
                 ]}
               >
                 {label}
@@ -430,64 +591,138 @@ function BottomNav({ screen, nav }) {
   );
 }
 
+/* =========================================================
+   HOME
+========================================================= */
+
 function Home({
   nav,
   setSelectedIssue,
   startIntake,
 }) {
-  const [query, setQuery] = useState("");
+  const { width } =
+    useWindowDimensions();
 
-  const popularIssues = ISSUES.slice(0, 9);
+  const isMobile = width < 600;
+
+  const [query, setQuery] =
+    useState("");
+
+  const popularIssues =
+    ISSUES.slice(0, 9);
 
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
       <View style={styles.hero}>
         <View style={styles.heroTop}>
           <Logo />
-          <View style={styles.secureBadge}>
-            <Icon name="shield-check-outline" size={14} color={GREEN} />
-            <Text style={styles.secureText}>LOCAL • PRIVATE</Text>
-          </View>
+
+          {!isMobile && (
+            <View
+              style={
+                styles.secureBadge
+              }
+            >
+              <Icon
+                name="shield-check-outline"
+                size={14}
+                color={GREEN}
+              />
+
+              <Text
+                style={
+                  styles.secureText
+                }
+              >
+                LOCAL • PRIVATE
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View style={styles.heroContent}>
-          <Text style={styles.heroEyebrow}>CONSUMER LEGAL AWARENESS</Text>
+        <View
+          style={styles.heroContent}
+        >
+          <Text
+            style={styles.heroEyebrow}
+          >
+            CONSUMER LEGAL AWARENESS
+          </Text>
 
-          <Text style={styles.heroTitle}>
+          <Text
+            style={[
+              styles.heroTitle,
+              isMobile &&
+                styles.heroTitleMobile,
+            ]}
+          >
             Know your rights.
             {"\n"}
             Know your next step.
           </Text>
 
-          <Text style={styles.heroDescription}>
-            Understand consumer rights, organise evidence and turn a
-            grievance into a clear action plan.
+          <Text
+            style={
+              styles.heroDescription
+            }
+          >
+            Understand consumer rights,
+            organise evidence and turn a
+            grievance into a clear action
+            plan.
           </Text>
 
-          <View style={styles.heroActions}>
+          <View
+            style={[
+              styles.heroActions,
+              isMobile &&
+                styles.heroActionsMobile,
+            ]}
+          >
             <Button
               title="Describe what happened"
               icon="arrow-right"
-              onPress={startIntake}
+              onPress={
+                startIntake
+              }
+              full={isMobile}
             />
 
             <Button
               title="Explore consumer rights"
               icon="scale-balance"
               secondary
-              onPress={() => nav("rights")}
+              onPress={() =>
+                nav("rights")
+              }
+              full={isMobile}
             />
           </View>
         </View>
 
-        <View style={styles.heroFooter}>
-          <Text style={styles.heroFooterText}>
-            AI explains • You decide • Evidence supports
-          </Text>
-        </View>
+        {!isMobile && (
+          <View
+            style={
+              styles.heroFooter
+            }
+          >
+            <Text
+              style={
+                styles.heroFooterText
+              }
+            >
+              AI explains • You decide •
+              Evidence supports
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.content}>
@@ -496,34 +731,77 @@ function Home({
           title="What every consumer should know"
           description="Start with the rights recognised as the foundation of consumer awareness."
           right={
-            <Pressable onPress={() => nav("rights")}>
-              <Text style={styles.linkText}>View all →</Text>
-            </Pressable>
+            !isMobile && (
+              <Pressable
+                onPress={() =>
+                  nav("rights")
+                }
+              >
+                <Text
+                  style={styles.linkText}
+                >
+                  View all →
+                </Text>
+              </Pressable>
+            )
           }
         />
 
-        <View style={styles.rightsGrid}>
+        <ResponsiveGrid columns={3}>
           {RIGHTS.map((right) => (
             <Pressable
               key={right.id}
-              onPress={() => nav("rights")}
+              onPress={() =>
+                nav("rights")
+              }
               style={({ pressed }) => [
                 styles.rightCard,
-                pressed && styles.pressed,
+                pressed &&
+                  styles.pressed,
               ]}
             >
-              <View style={styles.numberRow}>
-                <Text style={styles.rightNumber}>{right.number}</Text>
-                <Icon name={right.icon} size={24} color={YELLOW} />
+              <View
+                style={
+                  styles.numberRow
+                }
+              >
+                <Text
+                  style={
+                    styles.rightNumber
+                  }
+                >
+                  {right.number}
+                </Text>
+
+                <Icon
+                  name={right.icon}
+                  size={24}
+                  color={YELLOW}
+                />
               </View>
 
-              <Text style={styles.rightTitle}>{right.title}</Text>
-              <Text style={styles.rightShort}>{right.short}</Text>
+              <Text
+                style={
+                  styles.rightTitle
+                }
+              >
+                {right.title}
+              </Text>
+
+              <Text
+                style={
+                  styles.rightShort
+                }
+              >
+                {right.short}
+              </Text>
             </Pressable>
           ))}
-        </View>
+        </ResponsiveGrid>
 
-        <View style={styles.divider} />
+        <View
+          style={styles.divider}
+        />
 
         <SectionHeader
           eyebrow="CONSUMER ISSUES"
@@ -531,62 +809,129 @@ function Home({
           description="NyayaSaathi covers consumer concerns across products, services, finance, travel, healthcare and digital markets."
         />
 
-        <View style={styles.searchBox}>
-          <Icon name="magnify" size={21} color={DIM} />
+        <View
+          style={styles.searchBox}
+        >
+          <Icon
+            name="magnify"
+            size={21}
+            color={DIM}
+          />
+
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Search an issue..."
-            placeholderTextColor={DIM}
-            style={styles.searchInput}
+            placeholderTextColor={
+              DIM
+            }
+            style={
+              styles.searchInput
+            }
           />
         </View>
 
-        <View style={styles.issueGrid}>
+        <ResponsiveGrid columns={3}>
           {popularIssues
             .filter((item) =>
-              item.title.toLowerCase().includes(query.toLowerCase())
+              item.title
+                .toLowerCase()
+                .includes(
+                  query.toLowerCase()
+                )
             )
             .map((item) => (
               <Pressable
                 key={item.id}
                 onPress={() => {
-                  setSelectedIssue(item);
+                  setSelectedIssue(
+                    item
+                  );
                   startIntake(item);
                 }}
-                style={({ pressed }) => [
+                style={({
+                  pressed,
+                }) => [
                   styles.issueCard,
-                  pressed && styles.pressed,
+                  pressed &&
+                    styles.pressed,
                 ]}
               >
-                <Icon name={item.icon} size={23} color={WHITE} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.issueCategory}>
+                <Icon
+                  name={item.icon}
+                  size={23}
+                  color={WHITE}
+                />
+
+                <View
+                  style={
+                    styles.issueCardText
+                  }
+                >
+                  <Text
+                    style={
+                      styles.issueCategory
+                    }
+                  >
                     {item.category}
                   </Text>
-                  <Text style={styles.issueTitle}>{item.title}</Text>
+
+                  <Text
+                    style={
+                      styles.issueTitle
+                    }
+                  >
+                    {item.title}
+                  </Text>
                 </View>
-                <Icon name="arrow-top-right" size={18} color={DIM} />
+
+                <Icon
+                  name="arrow-top-right"
+                  size={18}
+                  color={DIM}
+                />
               </Pressable>
             ))}
-        </View>
+        </ResponsiveGrid>
 
         <Pressable
-          onPress={() => nav("rights")}
+          onPress={() =>
+            nav("rights")
+          }
           style={({ pressed }) => [
             styles.fullLibrary,
-            pressed && styles.pressed,
+            pressed &&
+              styles.pressed,
           ]}
         >
-          <View>
-            <Text style={styles.fullLibraryEyebrow}>
+          <View
+            style={
+              styles.fullLibraryText
+            }
+          >
+            <Text
+              style={
+                styles.fullLibraryEyebrow
+              }
+            >
               CONSUMER KNOWLEDGE BASE
             </Text>
-            <Text style={styles.fullLibraryTitle}>
-              Explore the complete issue library
+
+            <Text
+              style={
+                styles.fullLibraryTitle
+              }
+            >
+              Explore the complete issue
+              library
             </Text>
           </View>
-          <Icon name="arrow-right" size={24} color={YELLOW} />
+
+          <Icon
+            name="arrow-right"
+            size={24}
+            color={BLACK}
+          />
         </Pressable>
 
         <View style={styles.journey}>
@@ -595,29 +940,87 @@ function Home({
             title="From confusion to action"
           />
 
-          <View style={styles.journeyGrid}>
+          <ResponsiveGrid columns={4}>
             {[
-              ["01", "Understand", "Explain the situation in plain language."],
-              ["02", "Identify", "Map the concern to relevant consumer rights."],
-              ["03", "Prepare", "Build an evidence checklist and action plan."],
-              ["04", "Act", "Prepare a structured complaint or escalation."],
-            ].map(([number, title, description]) => (
-              <View key={number} style={styles.journeyItem}>
-                <Text style={styles.journeyNumber}>{number}</Text>
-                <Text style={styles.journeyTitle}>{title}</Text>
-                <Text style={styles.journeyDescription}>
-                  {description}
-                </Text>
-              </View>
-            ))}
-          </View>
+              [
+                "01",
+                "Understand",
+                "Explain the situation in plain language.",
+              ],
+              [
+                "02",
+                "Identify",
+                "Map the concern to relevant consumer rights.",
+              ],
+              [
+                "03",
+                "Prepare",
+                "Build an evidence checklist and action plan.",
+              ],
+              [
+                "04",
+                "Act",
+                "Prepare a structured complaint or escalation.",
+              ],
+            ].map(
+              ([
+                number,
+                title,
+                description,
+              ]) => (
+                <View
+                  key={number}
+                  style={
+                    styles.journeyItem
+                  }
+                >
+                  <Text
+                    style={
+                      styles.journeyNumber
+                    }
+                  >
+                    {number}
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.journeyTitle
+                    }
+                  >
+                    {title}
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.journeyDescription
+                    }
+                  >
+                    {description}
+                  </Text>
+                </View>
+              )
+            )}
+          </ResponsiveGrid>
         </View>
 
-        <View style={styles.disclaimer}>
-          <Icon name="information-outline" size={18} color={YELLOW} />
-          <Text style={styles.disclaimerText}>
-            NyayaSaathi provides general legal awareness and does not
-            replace professional legal advice.
+        <View
+          style={styles.disclaimer}
+        >
+          <Icon
+            name="information-outline"
+            size={18}
+            color={YELLOW}
+          />
+
+          <Text
+            style={
+              styles.disclaimerText
+            }
+          >
+            NyayaSaathi provides general
+            legal awareness and does not
+            replace professional legal
+            advice.
           </Text>
         </View>
       </View>
@@ -625,69 +1028,166 @@ function Home({
   );
 }
 
-function RightsScreen({ nav, setSelectedRight }) {
-  const [selected, setSelected] = useState(null);
+/* =========================================================
+   RIGHTS SCREEN
+========================================================= */
 
-  const selectedRight = RIGHTS.find((r) => r.id === selected);
+function RightsScreen({
+  nav,
+  setSelectedRight,
+}) {
+  const [selected, setSelected] =
+    useState(null);
+
+  const selectedRight =
+    RIGHTS.find(
+      (r) => r.id === selected
+    );
 
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>LEGAL KNOWLEDGE</Text>
-        <Text style={styles.pageTitle}>Consumer Rights</Text>
-        <Text style={styles.pageDescription}>
-          A practical guide to the six foundational consumer rights and
-          the situations in which they matter.
+
+        <Text
+          style={styles.pageKicker}
+        >
+          LEGAL KNOWLEDGE
+        </Text>
+
+        <Text
+          style={styles.pageTitle}
+        >
+          Consumer Rights
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          A practical guide to the six
+          foundational consumer rights
+          and the situations in which
+          they matter.
         </Text>
       </View>
 
       <View style={styles.content}>
         {selectedRight ? (
           <>
-            <Pressable onPress={() => setSelected(null)} style={styles.back}>
-              <Icon name="arrow-left" size={18} color={YELLOW} />
-              <Text style={styles.backText}>All rights</Text>
+            <Pressable
+              onPress={() =>
+                setSelected(null)
+              }
+              style={styles.back}
+            >
+              <Icon
+                name="arrow-left"
+                size={18}
+                color={YELLOW}
+              />
+
+              <Text
+                style={styles.backText}
+              >
+                All rights
+              </Text>
             </Pressable>
 
-            <Card style={styles.rightDetail}>
-              <View style={styles.detailIcon}>
+            <Card
+              style={
+                styles.rightDetail
+              }
+            >
+              <View
+                style={
+                  styles.detailIcon
+                }
+              >
                 <Icon
-                  name={selectedRight.icon}
+                  name={
+                    selectedRight.icon
+                  }
                   size={30}
                   color={YELLOW}
                 />
               </View>
 
-              <Text style={styles.detailNumber}>
-                RIGHT {selectedRight.number}
+              <Text
+                style={
+                  styles.detailNumber
+                }
+              >
+                RIGHT{" "}
+                {selectedRight.number}
               </Text>
 
-              <Text style={styles.detailTitle}>
+              <Text
+                style={
+                  styles.detailTitle
+                }
+              >
                 {selectedRight.title}
               </Text>
 
-              <Text style={styles.detailDescription}>
-                {selectedRight.description}
+              <Text
+                style={
+                  styles.detailDescription
+                }
+              >
+                {
+                  selectedRight.description
+                }
               </Text>
 
-              <Text style={styles.subheading}>WHERE IT MAY MATTER</Text>
+              <Text
+                style={styles.subheading}
+              >
+                WHERE IT MAY MATTER
+              </Text>
 
-              {selectedRight.examples.map((example) => (
-                <View key={example} style={styles.bulletRow}>
-                  <View style={styles.bullet} />
-                  <Text style={styles.bulletText}>{example}</Text>
-                </View>
-              ))}
+              {selectedRight.examples.map(
+                (example) => (
+                  <View
+                    key={example}
+                    style={
+                      styles.bulletRow
+                    }
+                  >
+                    <View
+                      style={
+                        styles.bullet
+                      }
+                    />
+
+                    <Text
+                      style={
+                        styles.bulletText
+                      }
+                    >
+                      {example}
+                    </Text>
+                  </View>
+                )
+              )}
 
               <Button
                 title="Start with this right"
                 icon="arrow-right"
                 onPress={() => {
-                  setSelectedRight(selectedRight);
+                  setSelectedRight(
+                    selectedRight
+                  );
                   nav("ask");
                 }}
               />
@@ -695,20 +1195,36 @@ function RightsScreen({ nav, setSelectedRight }) {
           </>
         ) : (
           <>
-            <View style={styles.rightsLargeGrid}>
+            <ResponsiveGrid columns={3}>
               {RIGHTS.map((right) => (
                 <Pressable
                   key={right.id}
-                  onPress={() => setSelected(right.id)}
-                  style={({ pressed }) => [
+                  onPress={() =>
+                    setSelected(
+                      right.id
+                    )
+                  }
+                  style={({
+                    pressed,
+                  }) => [
                     styles.largeRightCard,
-                    pressed && styles.pressed,
+                    pressed &&
+                      styles.pressed,
                   ]}
                 >
-                  <View style={styles.largeRightTop}>
-                    <Text style={styles.largeRightNumber}>
+                  <View
+                    style={
+                      styles.largeRightTop
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.largeRightNumber
+                      }
+                    >
                       {right.number}
                     </Text>
+
                     <Icon
                       name={right.icon}
                       size={30}
@@ -716,18 +1232,35 @@ function RightsScreen({ nav, setSelectedRight }) {
                     />
                   </View>
 
-                  <Text style={styles.largeRightTitle}>
+                  <Text
+                    style={
+                      styles.largeRightTitle
+                    }
+                  >
                     {right.title}
                   </Text>
 
-                  <Text style={styles.largeRightDescription}>
+                  <Text
+                    style={
+                      styles.largeRightDescription
+                    }
+                  >
                     {right.short}
                   </Text>
 
-                  <View style={styles.learnMore}>
-                    <Text style={styles.learnMoreText}>
+                  <View
+                    style={
+                      styles.learnMore
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.learnMoreText
+                      }
+                    >
                       Learn more
                     </Text>
+
                     <Icon
                       name="arrow-right"
                       size={17}
@@ -736,9 +1269,11 @@ function RightsScreen({ nav, setSelectedRight }) {
                   </View>
                 </Pressable>
               ))}
-            </View>
+            </ResponsiveGrid>
 
-            <View style={styles.divider} />
+            <View
+              style={styles.divider}
+            />
 
             <SectionHeader
               eyebrow="ISSUE LIBRARY"
@@ -746,25 +1281,49 @@ function RightsScreen({ nav, setSelectedRight }) {
               description="Browse common areas where consumer rights and grievance mechanisms may become relevant."
             />
 
-            <View style={styles.libraryGrid}>
+            <ResponsiveGrid columns={3}>
               {ISSUES.map((issue) => (
                 <Pressable
                   key={issue.id}
-                  onPress={() => nav("ask")}
-                  style={({ pressed }) => [
+                  onPress={() =>
+                    nav("ask")
+                  }
+                  style={({
+                    pressed,
+                  }) => [
                     styles.libraryItem,
-                    pressed && styles.pressed,
+                    pressed &&
+                      styles.pressed,
                   ]}
                 >
-                  <Icon name={issue.icon} size={21} color={YELLOW} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.libraryTitle}>
+                  <Icon
+                    name={issue.icon}
+                    size={21}
+                    color={YELLOW}
+                  />
+
+                  <View
+                    style={
+                      styles.libraryItemText
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.libraryTitle
+                      }
+                    >
                       {issue.title}
                     </Text>
-                    <Text style={styles.libraryCategory}>
+
+                    <Text
+                      style={
+                        styles.libraryCategory
+                      }
+                    >
                       {issue.category}
                     </Text>
                   </View>
+
                   <Icon
                     name="chevron-right"
                     size={18}
@@ -772,7 +1331,7 @@ function RightsScreen({ nav, setSelectedRight }) {
                   />
                 </Pressable>
               ))}
-            </View>
+            </ResponsiveGrid>
           </>
         )}
       </View>
@@ -780,55 +1339,115 @@ function RightsScreen({ nav, setSelectedRight }) {
   );
 }
 
+/* =========================================================
+   ASK SCREEN
+========================================================= */
+
 function AskScreen({
   selectedIssue,
   setSelectedIssue,
-  startIntake,
   analyze,
   nav,
 }) {
-  const [text, setText] = useState("");
-  const [category, setCategory] = useState(
-    selectedIssue?.title || ""
-  );
+  const { width } =
+    useWindowDimensions();
+
+  const isMobile = width < 600;
+
+  const [text, setText] =
+    useState("");
+
+  const [category, setCategory] =
+    useState(
+      selectedIssue?.title || ""
+    );
 
   useEffect(() => {
     if (selectedIssue) {
-      setCategory(selectedIssue.title);
+      setCategory(
+        selectedIssue.title
+      );
     }
   }, [selectedIssue]);
 
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={
+        styles.scrollContent
+      }
       keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>NYAYASAATHI AI</Text>
-        <Text style={styles.pageTitle}>Describe your situation</Text>
-        <Text style={styles.pageDescription}>
-          Tell us what happened. NyayaSaathi will organise the
-          information into a consumer-awareness action plan.
+
+        <Text
+          style={styles.pageKicker}
+        >
+          NYAYASAATHI AI
+        </Text>
+
+        <Text
+          style={[
+            styles.pageTitle,
+            isMobile &&
+              styles.pageTitleMobile,
+          ]}
+        >
+          Describe your situation
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          Tell us what happened.
+          NyayaSaathi will organise the
+          information into a
+          consumer-awareness action plan.
         </Text>
       </View>
 
       <View style={styles.content}>
-        <Card style={styles.aiCard}>
-          <View style={styles.aiHeader}>
-            <View style={styles.aiIcon}>
-              <Icon name="scale-balance" size={23} color={BLACK} />
+        <Card
+          style={styles.aiCard}
+        >
+          <View
+            style={styles.aiHeader}
+          >
+            <View
+              style={styles.aiIcon}
+            >
+              <Icon
+                name="scale-balance"
+                size={23}
+                color={BLACK}
+              />
             </View>
+
             <View>
-              <Text style={styles.aiTitle}>NyayaSaathi AI</Text>
-              <Text style={styles.aiStatus}>
+              <Text
+                style={styles.aiTitle}
+              >
+                NyayaSaathi AI
+              </Text>
+
+              <Text
+                style={styles.aiStatus}
+              >
                 GENERAL LEGAL AWARENESS
               </Text>
             </View>
           </View>
 
-          <Text style={styles.label}>WHAT HAPPENED?</Text>
+          <Text style={styles.label}>
+            WHAT HAPPENED?
+          </Text>
 
           <TextInput
             value={text}
@@ -840,32 +1459,49 @@ function AskScreen({
             style={styles.largeInput}
           />
 
-          <Text style={styles.label}>OPTIONAL ISSUE TYPE</Text>
+          <Text style={styles.label}>
+            OPTIONAL ISSUE TYPE
+          </Text>
 
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
+            showsHorizontalScrollIndicator={
+              false
+            }
+            contentContainerStyle={
+              styles.chipScroll
+            }
           >
-            {ISSUES.slice(0, 10).map((issue) => {
-              const active = category === issue.title;
+            {ISSUES.slice(
+              0,
+              10
+            ).map((issue) => {
+              const active =
+                category ===
+                issue.title;
 
               return (
                 <Pressable
                   key={issue.id}
                   onPress={() => {
-                    setCategory(issue.title);
-                    setSelectedIssue(issue);
+                    setCategory(
+                      issue.title
+                    );
+                    setSelectedIssue(
+                      issue
+                    );
                   }}
                   style={[
                     styles.selectChip,
-                    active && styles.selectChipActive,
+                    active &&
+                      styles.selectChipActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.selectChipText,
-                      active && styles.selectChipTextActive,
+                      active &&
+                        styles.selectChipTextActive,
                     ]}
                   >
                     {issue.title}
@@ -875,10 +1511,22 @@ function AskScreen({
             })}
           </ScrollView>
 
-          <View style={styles.aiFooter}>
-            <Icon name="lock-outline" size={16} color={DIM} />
-            <Text style={styles.aiFooterText}>
-              Your MVP data is stored locally on this device.
+          <View
+            style={styles.aiFooter}
+          >
+            <Icon
+              name="lock-outline"
+              size={16}
+              color={DIM}
+            />
+
+            <Text
+              style={
+                styles.aiFooterText
+              }
+            >
+              Your MVP data is stored
+              locally on this device.
             </Text>
           </View>
 
@@ -887,16 +1535,12 @@ function AskScreen({
             icon="arrow-right"
             full
             onPress={() => {
-              if (!text.trim()) {
-                setText(
-                  "I want to understand my consumer rights and what I can do about this situation."
-                );
-              }
+              const finalText =
+                text.trim() ||
+                "I want to understand my consumer rights and what I can do about this situation.";
 
               analyze({
-                text:
-                  text.trim() ||
-                  "I want to understand my consumer rights and what I can do about this situation.",
+                text: finalText,
                 category,
                 issue: selectedIssue,
               });
@@ -904,35 +1548,63 @@ function AskScreen({
           />
         </Card>
 
-        <View style={styles.noteBlock}>
-          <Text style={styles.noteTitle}>WHAT HAPPENS NEXT</Text>
+        <View
+          style={styles.noteBlock}
+        >
+          <Text
+            style={styles.noteTitle}
+          >
+            WHAT HAPPENS NEXT
+          </Text>
 
-          <View style={styles.noteRow}>
-            <Text style={styles.noteNumber}>01</Text>
-            <Text style={styles.noteText}>
-              We identify the consumer-rights areas that may be
-              relevant.
-            </Text>
-          </View>
+          {[
+            [
+              "01",
+              "We identify the consumer-rights areas that may be relevant.",
+            ],
+            [
+              "02",
+              "We turn the situation into a clear action plan.",
+            ],
+            [
+              "03",
+              "We suggest evidence to preserve before escalation.",
+            ],
+          ].map(
+            ([number, text]) => (
+              <View
+                key={number}
+                style={styles.noteRow}
+              >
+                <Text
+                  style={
+                    styles.noteNumber
+                  }
+                >
+                  {number}
+                </Text>
 
-          <View style={styles.noteRow}>
-            <Text style={styles.noteNumber}>02</Text>
-            <Text style={styles.noteText}>
-              We turn the situation into a clear action plan.
-            </Text>
-          </View>
-
-          <View style={styles.noteRow}>
-            <Text style={styles.noteNumber}>03</Text>
-            <Text style={styles.noteText}>
-              We suggest evidence to preserve before escalation.
-            </Text>
-          </View>
+                <Text
+                  style={styles.noteText}
+                >
+                  {text}
+                </Text>
+              </View>
+            )
+          )}
         </View>
 
-        <Pressable onPress={() => nav("rights")} style={styles.textLink}>
-          <Text style={styles.linkText}>
-            I want to learn about my rights first →
+        <Pressable
+          onPress={() =>
+            nav("rights")
+          }
+          style={styles.textLink}
+        >
+          <Text
+            style={styles.linkText}
+          >
+            I want to learn about my
+            rights first →
           </Text>
         </Pressable>
       </View>
@@ -940,81 +1612,166 @@ function AskScreen({
   );
 }
 
+/* =========================================================
+   ANALYSIS
+========================================================= */
+
 function AnalysisScreen({
   analysis,
   toggleEvidence,
   saveCase,
   generateComplaint,
-  nav,
 }) {
-  if (!analysis) return null;
+  if (!analysis) {
+    return (
+      <View
+        style={styles.emptyScreen}
+      >
+        <Text
+          style={styles.emptyTitle}
+        >
+          No analysis yet
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>CASE ANALYSIS</Text>
-        <Text style={styles.pageTitle}>Your situation, organised.</Text>
-        <Text style={styles.pageDescription}>
-          This is a structured awareness summary, not a legal
+
+        <Text
+          style={styles.pageKicker}
+        >
+          CASE ANALYSIS
+        </Text>
+
+        <Text
+          style={styles.pageTitle}
+        >
+          Your situation, organised.
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          This is a structured awareness
+          summary, not a legal
           determination.
         </Text>
       </View>
 
       <View style={styles.content}>
         <Card>
-          <Text style={styles.label}>WHAT WE UNDERSTAND</Text>
-          <Text style={styles.analysisText}>{analysis.text}</Text>
+          <Text style={styles.label}>
+            WHAT WE UNDERSTAND
+          </Text>
+
+          <Text
+            style={styles.analysisText}
+          >
+            {analysis.text}
+          </Text>
         </Card>
 
-        <View style={styles.analysisSection}>
+        <View
+          style={styles.analysisSection}
+        >
           <SectionHeader
             eyebrow="RIGHTS"
             title="Potentially relevant rights"
           />
 
-          <View style={styles.tagsWrap}>
-            {analysis.rights.map((right) => (
-              <Tag key={right}>{right}</Tag>
-            ))}
+          <View
+            style={styles.tagsWrap}
+          >
+            {analysis.rights.map(
+              (right) => (
+                <Tag key={right}>
+                  {right}
+                </Tag>
+              )
+            )}
           </View>
         </View>
 
-        <View style={styles.analysisSection}>
+        <View
+          style={styles.analysisSection}
+        >
           <SectionHeader
             eyebrow="PLAIN LANGUAGE"
             title="What this means"
           />
 
           <Card>
-            <Text style={styles.explanation}>
+            <Text
+              style={styles.explanation}
+            >
               {analysis.explanation}
             </Text>
           </Card>
         </View>
 
-        <View style={styles.analysisSection}>
+        <View
+          style={styles.analysisSection}
+        >
           <SectionHeader
             eyebrow="ACTION PLAN"
             title="What you can do next"
           />
 
-          {analysis.actions.map((action, index) => (
-            <View key={action} style={styles.actionRow}>
-              <View style={styles.actionNumber}>
-                <Text style={styles.actionNumberText}>
-                  {String(index + 1).padStart(2, "0")}
+          {analysis.actions.map(
+            (action, index) => (
+              <View
+                key={action}
+                style={styles.actionRow}
+              >
+                <View
+                  style={
+                    styles.actionNumber
+                  }
+                >
+                  <Text
+                    style={
+                      styles.actionNumberText
+                    }
+                  >
+                    {String(
+                      index + 1
+                    ).padStart(
+                      2,
+                      "0"
+                    )}
+                  </Text>
+                </View>
+
+                <Text
+                  style={
+                    styles.actionText
+                  }
+                >
+                  {action}
                 </Text>
               </View>
-              <Text style={styles.actionText}>{action}</Text>
-            </View>
-          ))}
+            )
+          )}
         </View>
 
-        <View style={styles.analysisSection}>
+        <View
+          style={styles.analysisSection}
+        >
           <SectionHeader
             eyebrow="EVIDENCE"
             title="Build your evidence file"
@@ -1022,37 +1779,67 @@ function AnalysisScreen({
           />
 
           <Card>
-            {analysis.evidence.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => toggleEvidence(item.id)}
-                style={styles.evidenceRow}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    item.done && styles.checkboxDone,
-                  ]}
+            {analysis.evidence.map(
+              (item) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() =>
+                    toggleEvidence(
+                      item.id
+                    )
+                  }
+                  style={
+                    styles.evidenceRow
+                  }
                 >
-                  {item.done && (
-                    <Icon name="check" size={15} color={BLACK} />
-                  )}
-                </View>
+                  <View
+                    style={[
+                      styles.checkbox,
+                      item.done &&
+                        styles.checkboxDone,
+                    ]}
+                  >
+                    {item.done && (
+                      <Icon
+                        name="check"
+                        size={15}
+                        color={BLACK}
+                      />
+                    )}
+                  </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.evidenceTitle}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.evidenceDescription}>
-                    {item.description}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
+                  <View
+                    style={
+                      styles.evidenceText
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.evidenceTitle
+                      }
+                    >
+                      {item.title}
+                    </Text>
+
+                    <Text
+                      style={
+                        styles.evidenceDescription
+                      }
+                    >
+                      {
+                        item.description
+                      }
+                    </Text>
+                  </View>
+                </Pressable>
+              )
+            )}
           </Card>
         </View>
 
-        <View style={styles.twoButtons}>
+        <View
+          style={styles.twoButtons}
+        >
           <Button
             title="Save as case"
             icon="briefcase-plus-outline"
@@ -1063,15 +1850,30 @@ function AnalysisScreen({
             title="Draft complaint"
             icon="file-document-edit-outline"
             secondary
-            onPress={generateComplaint}
+            onPress={
+              generateComplaint
+            }
           />
         </View>
 
-        <View style={styles.disclaimer}>
-          <Icon name="alert-outline" size={18} color={YELLOW} />
-          <Text style={styles.disclaimerText}>
-            This analysis is for general consumer awareness. Whether a
-            specific legal remedy applies depends on the facts and
+        <View
+          style={styles.disclaimer}
+        >
+          <Icon
+            name="alert-outline"
+            size={18}
+            color={YELLOW}
+          />
+
+          <Text
+            style={
+              styles.disclaimerText
+            }
+          >
+            This analysis is for general
+            consumer awareness. Whether a
+            specific legal remedy applies
+            depends on the facts and
             applicable law.
           </Text>
         </View>
@@ -1080,101 +1882,220 @@ function AnalysisScreen({
   );
 }
 
-function ComplaintScreen({ complaint, nav }) {
+/* =========================================================
+   COMPLAINT
+========================================================= */
+
+function ComplaintScreen({
+  complaint,
+  nav,
+}) {
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>DOCUMENT PREPARATION</Text>
-        <Text style={styles.pageTitle}>Complaint Draft</Text>
-        <Text style={styles.pageDescription}>
-          A structured starting point that you can review and edit
+
+        <Text
+          style={styles.pageKicker}
+        >
+          DOCUMENT PREPARATION
+        </Text>
+
+        <Text
+          style={styles.pageTitle}
+        >
+          Complaint Draft
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          A structured starting point
+          that you can review and edit
           before sending.
         </Text>
       </View>
 
       <View style={styles.content}>
-        <Card style={styles.documentCard}>
-          <View style={styles.documentHeader}>
-            <Text style={styles.documentLabel}>DRAFT</Text>
-            <Icon name="file-document-outline" size={22} color={YELLOW} />
+        <Card
+          style={
+            styles.documentCard
+          }
+        >
+          <View
+            style={
+              styles.documentHeader
+            }
+          >
+            <Text
+              style={
+                styles.documentLabel
+              }
+            >
+              DRAFT
+            </Text>
+
+            <Icon
+              name="file-document-outline"
+              size={22}
+              color={YELLOW}
+            />
           </View>
 
-          <Text style={styles.documentText}>{complaint}</Text>
+          <Text
+            style={styles.documentText}
+          >
+            {complaint}
+          </Text>
         </Card>
 
-        <View style={styles.twoButtons}>
+        <View
+          style={styles.twoButtons}
+        >
           <Button
-            title="Back to case"
+            title="Back to cases"
             icon="arrow-left"
             secondary
-            onPress={() => nav("cases")}
+            onPress={() =>
+              nav("cases")
+            }
           />
+
           <Button
             title="Save draft"
             icon="content-save-outline"
-            onPress={() => nav("cases")}
+            onPress={() =>
+              nav("cases")
+            }
           />
-        </View>
-
-        <View style={styles.disclaimer}>
-          <Icon name="information-outline" size={18} color={YELLOW} />
-          <Text style={styles.disclaimerText}>
-            Review all facts, dates, amounts and supporting documents
-            before using a complaint draft.
-          </Text>
         </View>
       </View>
     </ScrollView>
   );
 }
 
-function CasesScreen({ cases, nav, setActiveCase }) {
+/* =========================================================
+   CASES
+========================================================= */
+
+function CasesScreen({
+  cases,
+  nav,
+  setActiveCase,
+}) {
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>CASE MANAGEMENT</Text>
-        <Text style={styles.pageTitle}>My Cases</Text>
-        <Text style={styles.pageDescription}>
-          Keep your consumer grievances, evidence and action plans
+
+        <Text
+          style={styles.pageKicker}
+        >
+          CASE MANAGEMENT
+        </Text>
+
+        <Text
+          style={styles.pageTitle}
+        >
+          My Cases
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          Keep your consumer grievances,
+          evidence and action plans
           organised in one place.
         </Text>
       </View>
 
       <View style={styles.content}>
-        <View style={styles.caseToolbar}>
+        <View
+          style={styles.caseToolbar}
+        >
           <View>
-            <Text style={styles.caseCount}>{cases.length}</Text>
-            <Text style={styles.caseCountLabel}>LOCAL CASES</Text>
+            <Text
+              style={styles.caseCount}
+            >
+              {cases.length}
+            </Text>
+
+            <Text
+              style={
+                styles.caseCountLabel
+              }
+            >
+              LOCAL CASES
+            </Text>
           </View>
 
           <Button
             title="New case"
             icon="plus"
             small
-            onPress={() => nav("ask")}
+            onPress={() =>
+              nav("ask")
+            }
           />
         </View>
 
         {cases.length === 0 ? (
-          <Card style={styles.emptyState}>
-            <Icon name="briefcase-outline" size={38} color={DIM} />
-            <Text style={styles.emptyTitle}>No cases yet</Text>
-            <Text style={styles.emptyText}>
-              Start by describing a consumer situation and NyayaSaathi
-              will help you structure it.
+          <Card
+            style={
+              styles.emptyState
+            }
+          >
+            <Icon
+              name="briefcase-outline"
+              size={38}
+              color={DIM}
+            />
+
+            <Text
+              style={
+                styles.emptyTitle
+              }
+            >
+              No cases yet
             </Text>
+
+            <Text
+              style={styles.emptyText}
+            >
+              Start by describing a
+              consumer situation and
+              NyayaSaathi will help you
+              structure it.
+            </Text>
+
             <Button
               title="Start a case"
               icon="arrow-right"
-              onPress={() => nav("ask")}
+              onPress={() =>
+                nav("ask")
+              }
             />
           </Card>
         ) : (
@@ -1182,15 +2103,24 @@ function CasesScreen({ cases, nav, setActiveCase }) {
             <Pressable
               key={item.id}
               onPress={() => {
-                setActiveCase(item);
+                setActiveCase(
+                  item
+                );
                 nav("analysis");
               }}
-              style={({ pressed }) => [
+              style={({
+                pressed,
+              }) => [
                 styles.caseCard,
-                pressed && styles.pressed,
+                pressed &&
+                  styles.pressed,
               ]}
             >
-              <View style={styles.caseIcon}>
+              <View
+                style={
+                  styles.caseIcon
+                }
+              >
                 <Icon
                   name="briefcase-outline"
                   size={22}
@@ -1198,13 +2128,39 @@ function CasesScreen({ cases, nav, setActiveCase }) {
                 />
               </View>
 
-              <View style={{ flex: 1 }}>
-                <Text style={styles.caseTitle}>{item.title}</Text>
-                <Text style={styles.caseIssue}>{item.issue}</Text>
-                <Text style={styles.caseDate}>{item.date}</Text>
+              <View
+                style={
+                  styles.caseMain
+                }
+              >
+                <Text
+                  style={
+                    styles.caseTitle
+                  }
+                >
+                  {item.title}
+                </Text>
+
+                <Text
+                  style={
+                    styles.caseIssue
+                  }
+                >
+                  {item.issue}
+                </Text>
+
+                <Text
+                  style={
+                    styles.caseDate
+                  }
+                >
+                  {item.date}
+                </Text>
               </View>
 
-              <Tag>{item.status}</Tag>
+              <Tag>
+                {item.status}
+              </Tag>
             </Pressable>
           ))
         )}
@@ -1213,31 +2169,85 @@ function CasesScreen({ cases, nav, setActiveCase }) {
   );
 }
 
+/* =========================================================
+   PROFILE
+========================================================= */
+
 function ProfileScreen() {
   return (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
+      contentContainerStyle={
+        styles.scrollContent
+      }
+      showsVerticalScrollIndicator={
+        false
+      }
     >
-      <View style={styles.pageHeader}>
+      <View
+        style={styles.pageHeader}
+      >
         <Logo compact />
-        <Text style={styles.pageKicker}>SETTINGS & INFORMATION</Text>
-        <Text style={styles.pageTitle}>Profile</Text>
-        <Text style={styles.pageDescription}>
-          Your NyayaSaathi workspace and privacy information.
+
+        <Text
+          style={styles.pageKicker}
+        >
+          SETTINGS & INFORMATION
+        </Text>
+
+        <Text
+          style={styles.pageTitle}
+        >
+          Profile
+        </Text>
+
+        <Text
+          style={
+            styles.pageDescription
+          }
+        >
+          Your NyayaSaathi workspace and
+          privacy information.
         </Text>
       </View>
 
       <View style={styles.content}>
-        <Card style={styles.profileCard}>
-          <View style={styles.profileIcon}>
-            <Icon name="account-outline" size={30} color={YELLOW} />
+        <Card
+          style={
+            styles.profileCard
+          }
+        >
+          <View
+            style={
+              styles.profileIcon
+            }
+          >
+            <Icon
+              name="account-outline"
+              size={30}
+              color={YELLOW}
+            />
           </View>
 
-          <View>
-            <Text style={styles.profileTitle}>Local Workspace</Text>
-            <Text style={styles.profileDescription}>
-              No account required for this MVP.
+          <View
+            style={
+              styles.profileText
+            }
+          >
+            <Text
+              style={
+                styles.profileTitle
+              }
+            >
+              Local Workspace
+            </Text>
+
+            <Text
+              style={
+                styles.profileDescription
+              }
+            >
+              No account required for this
+              MVP.
             </Text>
           </View>
         </Card>
@@ -1263,34 +2273,110 @@ function ProfileScreen() {
             "About NyayaSaathi",
             "AI explains. Humans decide.",
           ],
-        ].map(([icon, title, description]) => (
-          <View key={title} style={styles.infoRow}>
-            <Icon name={icon} size={23} color={YELLOW} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.infoTitle}>{title}</Text>
-              <Text style={styles.infoDescription}>{description}</Text>
+        ].map(
+          ([
+            icon,
+            title,
+            description,
+          ]) => (
+            <View
+              key={title}
+              style={styles.infoRow}
+            >
+              <Icon
+                name={icon}
+                size={23}
+                color={YELLOW}
+              />
+
+              <View
+                style={
+                  styles.infoText
+                }
+              >
+                <Text
+                  style={
+                    styles.infoTitle
+                  }
+                >
+                  {title}
+                </Text>
+
+                <Text
+                  style={
+                    styles.infoDescription
+                  }
+                >
+                  {description}
+                </Text>
+              </View>
             </View>
-          </View>
-        ))}
+          )
+        )}
       </View>
     </ScrollView>
   );
 }
 
+/* =========================================================
+   APP
+========================================================= */
+
 export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [cases, setCases] = useState([]);
-  const [selectedIssue, setSelectedIssue] = useState(null);
-  const [selectedRight, setSelectedRight] = useState(null);
-  const [analysis, setAnalysis] = useState(null);
-  const [complaint, setComplaint] = useState("");
-  const [activeCase, setActiveCase] = useState(null);
+  const {
+    width,
+  } = useWindowDimensions();
 
-  const fade = useRef(new Animated.Value(1)).current;
-  const translate = useRef(new Animated.Value(0)).current;
+  const isDesktop =
+    width >= 900;
 
-  const dimensions = Dimensions.get("window");
-  const isDesktop = dimensions.width >= 900;
+  const isMobile =
+    width < 600;
+
+  const [
+    screen,
+    setScreen,
+  ] = useState("home");
+
+  const [
+    cases,
+    setCases,
+  ] = useState([]);
+
+  const [
+    selectedIssue,
+    setSelectedIssue,
+  ] = useState(null);
+
+  const [
+    selectedRight,
+    setSelectedRight,
+  ] = useState(null);
+
+  const [
+    analysis,
+    setAnalysis,
+  ] = useState(null);
+
+  const [
+    complaint,
+    setComplaint,
+  ] = useState("");
+
+  const [
+    activeCase,
+    setActiveCase,
+  ] = useState(null);
+
+  const fade =
+    useRef(
+      new Animated.Value(1)
+    ).current;
+
+  const translate =
+    useRef(
+      new Animated.Value(0)
+    ).current;
 
   useEffect(() => {
     loadCases();
@@ -1298,19 +2384,27 @@ export default function App() {
 
   async function loadCases() {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const stored =
+        await AsyncStorage.getItem(
+          STORAGE_KEY
+        );
 
       if (stored) {
-        setCases(JSON.parse(stored));
-      } else {
-        setCases([]);
+        setCases(
+          JSON.parse(stored)
+        );
       }
     } catch (error) {
-      console.log("Could not load cases", error);
+      console.log(
+        "Could not load cases",
+        error
+      );
     }
   }
 
-  async function persistCases(next) {
+  async function persistCases(
+    next
+  ) {
     setCases(next);
 
     try {
@@ -1319,12 +2413,21 @@ export default function App() {
         JSON.stringify(next)
       );
     } catch (error) {
-      console.log("Could not save cases", error);
+      console.log(
+        "Could not save cases",
+        error
+      );
     }
   }
 
-  function nav(nextScreen) {
-    if (nextScreen === screen) return;
+  function nav(
+    nextScreen
+  ) {
+    if (
+      nextScreen === screen
+    ) {
+      return;
+    }
 
     Animated.parallel([
       Animated.timing(fade, {
@@ -1332,51 +2435,83 @@ export default function App() {
         duration: 100,
         useNativeDriver: true,
       }),
-      Animated.timing(translate, {
-        toValue: 8,
-        duration: 100,
-        useNativeDriver: true,
-      }),
+
+      Animated.timing(
+        translate,
+        {
+          toValue: 8,
+          duration: 100,
+          useNativeDriver: true,
+        }
+      ),
     ]).start(() => {
-      setScreen(nextScreen);
+      setScreen(
+        nextScreen
+      );
 
       Animated.parallel([
-        Animated.timing(fade, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translate, {
-          toValue: 0,
-          duration: 220,
-          useNativeDriver: true,
-        }),
+        Animated.timing(
+          fade,
+          {
+            toValue: 1,
+            duration: 220,
+            useNativeDriver: true,
+          }
+        ),
+
+        Animated.timing(
+          translate,
+          {
+            toValue: 0,
+            duration: 220,
+            useNativeDriver: true,
+          }
+        ),
       ]).start();
     });
   }
 
-  function startIntake(issue = null) {
+  function startIntake(
+    issue = null
+  ) {
     if (issue) {
-      setSelectedIssue(issue);
+      setSelectedIssue(
+        issue
+      );
     }
 
     nav("ask");
   }
 
-  function analyze({ text, category, issue }) {
+  function analyze({
+    text,
+    category,
+    issue,
+  }) {
     const issueData =
       issue ||
       ISSUES.find(
         (item) =>
-          item.title.toLowerCase() ===
-          String(category).toLowerCase()
+          item.title
+            .toLowerCase() ===
+          String(category)
+            .toLowerCase()
       ) ||
       ISSUES[0];
 
-    const rights = issueData.rights
-      .map((id) => RIGHTS.find((right) => right.id === id))
-      .filter(Boolean)
-      .map((right) => right.title);
+    const rights =
+      issueData.rights
+        .map((id) =>
+          RIGHTS.find(
+            (right) =>
+              right.id === id
+          )
+        )
+        .filter(Boolean)
+        .map(
+          (right) =>
+            right.title
+        );
 
     const explanation =
       "Your situation appears to involve a consumer transaction or service where the information provided, the quality or safety of the product or service, the way the transaction was handled, or the response to your grievance may be relevant. The exact legal position depends on the facts and documents.";
@@ -1392,35 +2527,44 @@ export default function App() {
     const evidence = [
       {
         id: "transaction",
-        title: "Transaction / purchase record",
+        title:
+          "Transaction / purchase record",
         description:
           "Invoice, receipt, booking confirmation or payment record.",
         done: false,
       },
+
       {
         id: "communication",
-        title: "Communication",
+        title:
+          "Communication",
         description:
           "Emails, messages, complaint numbers or customer-support conversations.",
         done: false,
       },
+
       {
         id: "screenshots",
-        title: "Screenshots / photographs",
+        title:
+          "Screenshots / photographs",
         description:
           "Relevant listings, advertisements, product condition or service information.",
         done: false,
       },
+
       {
         id: "terms",
-        title: "Terms / warranty / policy",
+        title:
+          "Terms / warranty / policy",
         description:
           "Relevant terms, warranty documents or representations.",
         done: false,
       },
+
       {
         id: "identity",
-        title: "Additional supporting documents",
+        title:
+          "Additional supporting documents",
         description:
           "Any other document that helps establish the facts.",
         done: false,
@@ -1429,7 +2573,8 @@ export default function App() {
 
     setAnalysis({
       text,
-      category: issueData.title,
+      category:
+        issueData.title,
       rights,
       explanation,
       actions,
@@ -1440,45 +2585,80 @@ export default function App() {
   }
 
   function toggleEvidence(id) {
-    setAnalysis((current) => {
-      if (!current) return current;
+    setAnalysis(
+      (current) => {
+        if (!current) {
+          return current;
+        }
 
-      return {
-        ...current,
-        evidence: current.evidence.map((item) =>
-          item.id === id
-            ? { ...item, done: !item.done }
-            : item
-        ),
-      };
-    });
+        return {
+          ...current,
+
+          evidence:
+            current.evidence.map(
+              (item) =>
+                item.id === id
+                  ? {
+                      ...item,
+                      done: !item.done,
+                    }
+                  : item
+            ),
+        };
+      }
+    );
   }
 
   async function saveCase() {
-    if (!analysis) return;
+    if (!analysis) {
+      return;
+    }
 
     const newCase = {
       id: Date.now().toString(),
+
       title:
-        analysis.category || "Consumer grievance",
-      issue: analysis.category,
+        analysis.category ||
+        "Consumer grievance",
+
+      issue:
+        analysis.category,
+
       status: "Draft",
-      date: new Date().toLocaleDateString(),
+
+      date:
+        new Date().toLocaleDateString(),
+
       analysis,
     };
 
-    await persistCases([newCase, ...cases]);
-    setActiveCase(newCase);
+    await persistCases([
+      newCase,
+      ...cases,
+    ]);
+
+    setActiveCase(
+      newCase
+    );
+
     nav("cases");
   }
 
   function generateComplaint() {
-    if (!analysis) return;
+    if (!analysis) {
+      return;
+    }
 
-    const evidenceList = analysis.evidence
-      .filter((item) => item.done)
-      .map((item) => `- ${item.title}`)
-      .join("\n");
+    const evidenceList =
+      analysis.evidence
+        .filter(
+          (item) => item.done
+        )
+        .map(
+          (item) =>
+            `- ${item.title}`
+        )
+        .join("\n");
 
     const draft = `SUBJECT: Consumer Grievance – ${analysis.category}
 
@@ -1494,7 +2674,12 @@ RELEVANT CONSUMER CONCERNS
 
 The matter appears to involve the following consumer-rights areas:
 
-${analysis.rights.map((item) => `- ${item}`).join("\n")}
+${analysis.rights
+  .map(
+    (item) =>
+      `- ${item}`
+  )
+  .join("\n")}
 
 REQUEST
 
@@ -1502,7 +2687,10 @@ I request that the matter be reviewed and that an appropriate response or resolu
 
 SUPPORTING EVIDENCE
 
-${evidenceList || "- Evidence to be attached after review"}
+${
+  evidenceList ||
+  "- Evidence to be attached after review"
+}
 
 I am retaining the relevant records and communications relating to this matter.
 
@@ -1512,130 +2700,178 @@ Sincerely,
 [Date]`;
 
     setComplaint(draft);
+
     nav("complaint");
   }
 
-  const activeScreen = useMemo(() => {
-    if (screen === "home") {
-      return (
-        <Home
-          nav={nav}
-          setSelectedIssue={setSelectedIssue}
-          startIntake={startIntake}
-        />
-      );
-    }
+  const activeScreen =
+    useMemo(() => {
+      if (screen === "home") {
+        return (
+          <Home
+            nav={nav}
+            setSelectedIssue={
+              setSelectedIssue
+            }
+            startIntake={
+              startIntake
+            }
+          />
+        );
+      }
 
-    if (screen === "rights") {
-      return (
-        <RightsScreen
-          nav={nav}
-          setSelectedRight={setSelectedRight}
-        />
-      );
-    }
+      if (screen === "rights") {
+        return (
+          <RightsScreen
+            nav={nav}
+            setSelectedRight={
+              setSelectedRight
+            }
+          />
+        );
+      }
 
-    if (screen === "ask") {
-      return (
-        <AskScreen
-          selectedIssue={selectedIssue}
-          setSelectedIssue={setSelectedIssue}
-          startIntake={startIntake}
-          analyze={analyze}
-          nav={nav}
-        />
-      );
-    }
+      if (screen === "ask") {
+        return (
+          <AskScreen
+            selectedIssue={
+              selectedIssue
+            }
+            setSelectedIssue={
+              setSelectedIssue
+            }
+            analyze={analyze}
+            nav={nav}
+          />
+        );
+      }
 
-    if (screen === "analysis") {
-      return (
-        <AnalysisScreen
-          analysis={analysis}
-          toggleEvidence={toggleEvidence}
-          saveCase={saveCase}
-          generateComplaint={generateComplaint}
-          nav={nav}
-        />
-      );
-    }
+      if (screen === "analysis") {
+        return (
+          <AnalysisScreen
+            analysis={analysis}
+            toggleEvidence={
+              toggleEvidence
+            }
+            saveCase={saveCase}
+            generateComplaint={
+              generateComplaint
+            }
+          />
+        );
+      }
 
-    if (screen === "complaint") {
-      return (
-        <ComplaintScreen
-          complaint={complaint}
-          nav={nav}
-        />
-      );
-    }
+      if (screen === "complaint") {
+        return (
+          <ComplaintScreen
+            complaint={complaint}
+            nav={nav}
+          />
+        );
+      }
 
-    if (screen === "cases") {
-      return (
-        <CasesScreen
-          cases={cases}
-          nav={nav}
-          setActiveCase={setActiveCase}
-        />
-      );
-    }
+      if (screen === "cases") {
+        return (
+          <CasesScreen
+            cases={cases}
+            nav={nav}
+            setActiveCase={
+              setActiveCase
+            }
+          />
+        );
+      }
 
-    if (screen === "profile") {
-      return <ProfileScreen />;
-    }
+      if (screen === "profile") {
+        return <ProfileScreen />;
+      }
 
-    return null;
-  }, [
-    screen,
-    selectedIssue,
-    analysis,
-    complaint,
-    cases,
-    activeCase,
-  ]);
+      return null;
+    }, [
+      screen,
+      selectedIssue,
+      analysis,
+      complaint,
+      cases,
+    ]);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={styles.safe}
+    >
       <StatusBar
         barStyle="light-content"
         backgroundColor={BLACK}
       />
 
-      <View style={styles.appBackground}>
+      <View
+        style={
+          styles.appBackground
+        }
+      >
         {isDesktop && (
-          <View style={styles.desktopHeader}>
+          <View
+            style={
+              styles.desktopHeader
+            }
+          >
             <Logo compact />
 
-            <View style={styles.desktopNav}>
+            <View
+              style={
+                styles.desktopNav
+              }
+            >
               {[
                 ["home", "Home"],
-                ["rights", "Consumer Rights"],
-                ["cases", "My Cases"],
-                ["ask", "Ask NyayaSaathi"],
-              ].map(([id, label]) => (
-                <Pressable
-                  key={id}
-                  onPress={() => nav(id)}
-                  style={[
-                    styles.desktopNavItem,
-                    screen === id &&
-                      styles.desktopNavItemActive,
-                  ]}
-                >
-                  <Text
+                [
+                  "rights",
+                  "Consumer Rights",
+                ],
+                [
+                  "cases",
+                  "My Cases",
+                ],
+                [
+                  "ask",
+                  "Ask NyayaSaathi",
+                ],
+              ].map(
+                ([id, label]) => (
+                  <Pressable
+                    key={id}
+                    onPress={() =>
+                      nav(id)
+                    }
                     style={[
-                      styles.desktopNavText,
-                      screen === id &&
-                        styles.desktopNavTextActive,
+                      styles.desktopNavItem,
+                      screen ===
+                        id &&
+                        styles.desktopNavItemActive,
                     ]}
                   >
-                    {label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.desktopNavText,
+                        screen ===
+                          id &&
+                          styles.desktopNavTextActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                )
+              )}
             </View>
 
             <Pressable
-              onPress={() => nav("profile")}
-              style={styles.desktopProfile}
+              onPress={() =>
+                nav("profile")
+              }
+              style={
+                styles.desktopProfile
+              }
             >
               <Icon
                 name="account-outline"
@@ -1649,25 +2885,38 @@ Sincerely,
         <View
           style={[
             styles.appShell,
-            isDesktop && styles.appShellDesktop,
+            isDesktop &&
+              styles.appShellDesktop,
           ]}
         >
           <Animated.View
             style={{
               flex: 1,
               opacity: fade,
-              transform: [{ translateY: translate }],
+              transform: [
+                {
+                  translateY:
+                    translate,
+                },
+              ],
             }}
           >
             {activeScreen}
           </Animated.View>
 
-          <BottomNav screen={screen} nav={nav} />
+          <BottomNav
+            screen={screen}
+            nav={nav}
+          />
         </View>
       </View>
     </SafeAreaView>
   );
 }
+
+/* =========================================================
+   STYLES
+========================================================= */
 
 const styles = StyleSheet.create({
   safe: {
@@ -1687,8 +2936,10 @@ const styles = StyleSheet.create({
   },
 
   appShellDesktop: {
-    maxWidth: 1280,
+    maxWidth: 1440,
   },
+
+  /* HEADER */
 
   desktopHeader: {
     height: 74,
@@ -1735,33 +2986,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  /* SCROLL */
+
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 110,
   },
 
   content: {
     width: "100%",
     maxWidth: 1180,
     alignSelf: "center",
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
   },
 
-  hero: {
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-    paddingHorizontal: 22,
-    paddingTop: 28,
-    paddingBottom: 30,
-  },
-
-  heroTop: {
-    width: "100%",
-    maxWidth: 1180,
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+  /* LOGO */
 
   logoRow: {
     flexDirection: "row",
@@ -1790,6 +3028,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.1,
     marginTop: 3,
+  },
+
+  /* HERO */
+
+  hero: {
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 30,
+  },
+
+  heroTop: {
+    width: "100%",
+    maxWidth: 1180,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   secureBadge: {
@@ -1834,6 +3091,12 @@ const styles = StyleSheet.create({
     maxWidth: 850,
   },
 
+  heroTitleMobile: {
+    fontSize: 36,
+    lineHeight: 41,
+    letterSpacing: -1,
+  },
+
   heroDescription: {
     color: MUTED,
     fontSize: 17,
@@ -1849,6 +3112,10 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
 
+  heroActionsMobile: {
+    flexDirection: "column",
+  },
+
   heroFooter: {
     width: "100%",
     maxWidth: 1180,
@@ -1862,6 +3129,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
   },
 
+  /* SECTIONS */
+
   sectionHeader: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -1869,6 +3138,10 @@ const styles = StyleSheet.create({
     gap: 15,
     marginTop: 48,
     marginBottom: 20,
+  },
+
+  sectionHeaderText: {
+    flex: 1,
   },
 
   eyebrow: {
@@ -1900,16 +3173,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  rightsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+  divider: {
+    height: 1,
+    backgroundColor: BORDER,
+    marginVertical: 46,
   },
 
+  /* RIGHT CARDS */
+
   rightCard: {
-    flexGrow: 1,
-    flexBasis: "31%",
-    minWidth: 240,
+    width: "100%",
     backgroundColor: PANEL,
     borderWidth: 1,
     borderColor: BORDER,
@@ -1944,14 +3217,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: BORDER,
-    marginVertical: 46,
-  },
+  /* SEARCH */
 
   searchBox: {
-    height: 52,
+    minHeight: 52,
     borderWidth: 1,
     borderColor: BORDER,
     backgroundColor: PANEL,
@@ -1964,20 +3233,15 @@ const styles = StyleSheet.create({
 
   searchInput: {
     flex: 1,
+    minWidth: 0,
     color: WHITE,
     fontSize: 14,
   },
 
-  issueGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
+  /* ISSUE */
 
   issueCard: {
-    flexGrow: 1,
-    flexBasis: "31%",
-    minWidth: 250,
+    width: "100%",
     minHeight: 95,
     borderWidth: 1,
     borderColor: BORDER,
@@ -1986,6 +3250,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+
+  issueCardText: {
+    flex: 1,
+    minWidth: 0,
   },
 
   issueCategory: {
@@ -1999,11 +3268,11 @@ const styles = StyleSheet.create({
   issueTitle: {
     color: WHITE,
     fontSize: 14,
-    fontWeight: "750",
+    fontWeight: "700",
   },
 
   fullLibrary: {
-    marginTop: 13,
+    marginTop: 4,
     backgroundColor: YELLOW,
     minHeight: 92,
     paddingHorizontal: 22,
@@ -2011,6 +3280,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 15,
+  },
+
+  fullLibraryText: {
+    flex: 1,
   },
 
   fullLibraryEyebrow: {
@@ -2027,26 +3301,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  /* JOURNEY */
+
   journey: {
     marginTop: 10,
   },
 
-  journeyGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    borderTopWidth: 1,
-    borderTopColor: BORDER,
-  },
-
   journeyItem: {
-    flexGrow: 1,
-    flexBasis: "25%",
-    minWidth: 220,
+    width: "100%",
     paddingTop: 20,
     paddingRight: 25,
     paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
   },
 
   journeyNumber: {
@@ -2067,8 +3334,10 @@ const styles = StyleSheet.create({
     color: MUTED,
     fontSize: 12,
     lineHeight: 18,
-    maxWidth: 220,
+    maxWidth: 240,
   },
+
+  /* DISCLAIMER */
 
   disclaimer: {
     marginTop: 30,
@@ -2088,11 +3357,13 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
+  /* PAGE HEADER */
+
   pageHeader: {
     width: "100%",
     maxWidth: 1180,
     alignSelf: "center",
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     paddingTop: 30,
     paddingBottom: 20,
   },
@@ -2114,6 +3385,11 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
 
+  pageTitleMobile: {
+    fontSize: 32,
+    lineHeight: 37,
+  },
+
   pageDescription: {
     color: MUTED,
     fontSize: 15,
@@ -2122,16 +3398,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
 
-  rightsLargeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
+  /* RIGHTS */
 
   largeRightCard: {
-    flexGrow: 1,
-    flexBasis: "31%",
-    minWidth: 270,
+    width: "100%",
     minHeight: 220,
     backgroundColor: PANEL,
     borderWidth: 1,
@@ -2156,7 +3426,7 @@ const styles = StyleSheet.create({
   largeRightTitle: {
     color: WHITE,
     fontSize: 21,
-    fontWeight: "850",
+    fontWeight: "800",
     marginBottom: 9,
   },
 
@@ -2179,16 +3449,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  libraryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-
   libraryItem: {
-    flexGrow: 1,
-    flexBasis: "30%",
-    minWidth: 260,
+    width: "100%",
     minHeight: 75,
     borderWidth: 1,
     borderColor: BORDER,
@@ -2199,10 +3461,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
+  libraryItemText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   libraryTitle: {
     color: WHITE,
     fontSize: 13,
-    fontWeight: "750",
+    fontWeight: "700",
   },
 
   libraryCategory: {
@@ -2292,12 +3559,16 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
+  /* CARD */
+
   card: {
     backgroundColor: PANEL,
     borderWidth: 1,
     borderColor: BORDER,
     padding: 20,
   },
+
+  /* AI */
 
   aiCard: {
     padding: 22,
@@ -2321,7 +3592,7 @@ const styles = StyleSheet.create({
   aiTitle: {
     color: WHITE,
     fontSize: 16,
-    fontWeight: "850",
+    fontWeight: "800",
   },
 
   aiStatus: {
@@ -2350,6 +3621,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 25,
+    textAlignVertical: "top",
+  },
+
+  chipScroll: {
+    gap: 8,
+    paddingBottom: 4,
   },
 
   selectChip: {
@@ -2385,7 +3662,10 @@ const styles = StyleSheet.create({
   aiFooterText: {
     color: DIM,
     fontSize: 10,
+    flex: 1,
   },
+
+  /* BUTTONS */
 
   button: {
     minHeight: 48,
@@ -2434,6 +3714,8 @@ const styles = StyleSheet.create({
     opacity: 0.72,
   },
 
+  /* NOTES */
+
   noteBlock: {
     marginTop: 28,
     borderTopWidth: 1,
@@ -2475,6 +3757,8 @@ const styles = StyleSheet.create({
     marginTop: 25,
     alignSelf: "center",
   },
+
+  /* ANALYSIS */
 
   analysisText: {
     color: WHITE,
@@ -2566,10 +3850,15 @@ const styles = StyleSheet.create({
     borderColor: YELLOW,
   },
 
+  evidenceText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   evidenceTitle: {
     color: WHITE,
     fontSize: 13,
-    fontWeight: "750",
+    fontWeight: "700",
     marginBottom: 4,
   },
 
@@ -2585,6 +3874,8 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 22,
   },
+
+  /* COMPLAINT */
 
   documentCard: {
     padding: 25,
@@ -2612,6 +3903,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 22,
   },
+
+  /* CASES */
 
   caseToolbar: {
     flexDirection: "row",
@@ -2654,6 +3947,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  caseMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   caseTitle: {
     color: WHITE,
     fontSize: 14,
@@ -2693,6 +3991,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 
+  /* PROFILE */
+
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -2707,6 +4007,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#171507",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  profileText: {
+    flex: 1,
+    minWidth: 0,
   },
 
   profileTitle: {
@@ -2730,6 +4035,11 @@ const styles = StyleSheet.create({
     borderBottomColor: BORDER,
   },
 
+  infoText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
   infoTitle: {
     color: WHITE,
     fontSize: 14,
@@ -2743,19 +4053,30 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  /* EMPTY */
+
+  emptyScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: BLACK,
+  },
+
+  /* BOTTOM NAV */
+
   bottomNavOuter: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingBottom: 10,
     backgroundColor: "transparent",
   },
 
   bottomNav: {
-    maxWidth: 700,
     width: "100%",
+    maxWidth: 700,
     alignSelf: "center",
     minHeight: 64,
     backgroundColor: "#0E0E0E",
@@ -2769,6 +4090,7 @@ const styles = StyleSheet.create({
 
   navItem: {
     flex: 1,
+    minWidth: 0,
     height: 58,
     alignItems: "center",
     justifyContent: "center",
@@ -2785,6 +4107,7 @@ const styles = StyleSheet.create({
     color: MUTED,
     fontSize: 9,
     fontWeight: "700",
+    textAlign: "center",
   },
 
   navLabelActive: {
