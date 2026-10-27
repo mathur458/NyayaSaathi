@@ -1,0 +1,22 @@
+{
+  "name": "nyayasaathi_mvp",
+  "version": "1.0.0",
+  "description": "Local-only hackathon MVP. AI responses are simulated locally. Install AsyncStorage with `npx expo install @react-native-async-storage/async-storage`.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "^3.1.1",
+    "expo": "~58.0.0",
+    "react": "^18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "^0.73.6",
+    "react-native-web": "^0.21.4"
+  }
+}
